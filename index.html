@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firebase Image Upload</title>
+    <link rel="stylesheet" href="./index.css" />
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
+  </head>
+  <body>
+    <div class="imageUpload">
+      <input type="file" class="inp" onchange="getImageData(event)" />
+      <button onclick="selectImage()" class="selectImage">Select Images</button>
+      <span class="filedata"></span>
+      <div class="progressBar">
+        <div class="progress"></div>
+      </div>
+      <button onclick="uploadImage()" class="upload">Upload</button>
+      <span class="loading">Loading...</span>
+      <img class="img" />
+    </div>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCJmd6hKZ3ILeLzpin1oiudv6YGv0h4bs4",
+        authDomain: "uploadimagetask.firebaseapp.com",
+        projectId: "uploadimagetask",
+        storageBucket: "uploadimagetask.appspot.com",
+        messagingSenderId: "578381568107",
+        appId: "1:578381568107:web:2bc11ce42a5ba45dec792e",
+      };
+
+      const app = firebase.initializeApp(firebaseConfig);
+
+      const storage = firebase.storage();
+
+      const inp = document.querySelector(".inp");
+      const progressbar = document.querySelector(".progress");
+      const img = document.querySelector(".img");
+      const fileData = document.querySelector(".filedata");
+      const loading = document.querySelector(".loading");
+      let file;
+      let fileName;
+      let progress;
+      let isLoading = false;
+      let uploadedFileName;
+      const selectImage = () => {
+        inp.click();
+      };
+      const getImageData = (e) => {
+        file = e.target.files[0];
+        fileName = Math.round(Math.random() * 9999) + file.name;
+        if (fileName) {
+          fileData.style.display = "block";
+        }
+        fileData.innerHTML = fileName;
+        console.log(file, fileName);
+      };
+
+      const uploadImage = () => {
+        loading.style.display = "block";
+        const storageRef = storage.ref().child("myimages");
+        const folderRef = storageRef.child(fileName);
+        const uploadtask = folderRef.put(file);
+        uploadtask.on(
+          "state_changed",
+          (snapshot) => {
+            console.log("Snapshot", snapshot.ref.name);
+            progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            progress = Math.round(progress);
+            progressbar.style.width = progress + "%";
+            progressbar.innerHTML = progress + "%";
+            uploadedFileName = snapshot.ref.name;
+          },
+          (error) => {
+            console.log(error);
+          },
+          () => {
+            storage
+              .ref("myimages")
+              .child(uploadedFileName)
+              .getDownloadURL()
+              .then((url) => {
+                console.log("URL", url);
+                if (!url) {
+                  img.style.display = "none";
+                } else {
+                  img.style.display = "block";
+                  loading.style.display = "none";
+                }
+                img.setAttribute("src", url);
+              });
+            console.log("File Uploaded Successfully");
+          }
+        );
+      };
+    </script>
+  </body>
+</html>
